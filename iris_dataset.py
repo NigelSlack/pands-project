@@ -21,11 +21,10 @@
 #               and use this for the stats. Re-arrange buttons and use destroy when quitting so
 #               that Quit only needs to be pressed once. Help text expanded a little. Allow for
 #               'Help' run time argument.
-<<<<<<< HEAD
 # 18/03/2019 NS Put scatter plots in separate outputs, with 2 extra ones - petal/sepal len/width 
 # 21/03/2019 NS Include photos        
-=======
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
+# 23/03/2019 NS Include Normal Fit plots and analysis by probability distribution functions
+# 25/03/2019 NS Put output text into GUI boxes
 #
 #----------------------------------------------------------------------------------------------------#
 
@@ -41,30 +40,26 @@ from pylab import *
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tkinter import *
-<<<<<<< HEAD
+from tkinter import messagebox
 from scipy.stats import shapiro
 from scipy.stats import normaltest
 from scipy.stats import anderson
 from scipy import polyval, stats
 from pylab import imread,subplot,imshow,show
-=======
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
+from statsmodels.graphics.gofplots import qqplot
 
 hlptext = """\n Display data and statistical analyses of the well known 'Iris data set'.
  The data provided by a collection of fifty samples each of three species of
  Iris collected by biologist Edgar Anderson were analysed in a paper in 1936
  by statistician Ronald Fisher. Since then this data set has been widely used for 
  testing statistical techniques.
-<<<<<<< HEAD
 
-=======
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
  This program provides an easy to use GUI to examine the data itself, and simple statistical
  features of the data.
  Syntax : python iris_dataset.py [help]"""
 
-def helptext():  
-  print(hlptext)  
+# def helptext():  
+#  print(hlptext)  
       
 # Use the python 'sys' module to check for run time arguments. 
 # If the user input 'help' output help text, otherwise tell them no arguments are required.
@@ -97,29 +92,46 @@ def describex(df,ix):
                      ], axis=1).T                     
                      
 pd.set_option('display.max_rows',len(df.index))
+pd.set_option('display.max_columns', None)
+# pd.set_option('display.max_rows', None)
 statall=describe(df)
 sl = str(df['species'].unique()).strip('[').strip(']')
 
 columnNames = list(df.head(0)) 
 species = (df['species'].unique())
 co = ['r','b','g']
-<<<<<<< HEAD
+
 
 # Turn bold on/off
 # ref https://stackoverflow.com/questions/287871/print-in-terminal-with-colors
 blx = '\033[0m'
 bld = '\033[1m'
-=======
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
 dx,stat =([],[])
 dx.append(df)
+saveout=sys.stdout
 
 #ref https://stackoverflow.com/questions/52350313/python-for-loop-create-a-list
 for i in range (3):
   dx.append(df[df[columnNames[4]]==species[i]])
   stat.append(describex(df[df[columnNames[4]]==species[i]],i))
-<<<<<<< HEAD
   
+def normal_fit(ix):
+  fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12,5.5))
+  ax= axes.flatten()  
+  for i1 in range(4):
+# ref https://thispointer.com/select-rows-columns-by-name-or-index-in-dataframe-using-loc-iloc-python-pandas/  
+    cD = dx[ix].loc[ : , columnNames[ix]] 
+# ref https://stackoverflow.com/questions/52813683/multiple-qq-plots-in-one-figure    
+    qqplot(cD, line='s',ax = ax[i1])
+    if ix:
+      ax[i1].set_title(species[(ix-1)] + " - " + columnNames[i1])
+    else:
+      ax[i1].set_title("All species - " + columnNames[i1])
+# Use tight_layout so the title and axes labels don't overlap
+# ref https://matplotlib.org/users/tight_layout_guide.html
+  plt.tight_layout()
+  plt.show()
+    
 # Show photos of each species
 def show_photos():
   itext= \
@@ -164,52 +176,6 @@ def show_photos():
   plt.figtext(.5, .05, itext, multialignment='left')
   plt.show()
   
-#c1=[]  
-#c2=[]
-#ix=len(dx[1])
-#for i in range(ix):
-#  c2.append(i)
-#  i+=1
-#c1 = sorted(list(dx[1]['sepal_length']))  
-
-#plt.plot(c2,c1)
-#plt.show()
-#plt.close()
-#input("stop")
-#sys.exit()
-          
-#iz=3
-#ty='petal_length'
-# ref https://machinelearningmastery.com/a-gentle-introduction-to-normality-tests-in-python/
-#stat, p = shapiro(dx[iz][ty])
-#print('Statistics=%.3f, p=%.3f' % (stat, p))
-# interpret
-#alpha = 0.05
-#if p > 0.05:
-#    print('Sample looks Gaussian (Shapiro) (fail to reject H0)')
-#else:
-#    print('Sample does not look Gaussian (Shapiro) (reject H0)')
-
-#stat, p = normaltest(dx[iz][ty])
-#print('Statistics=%.3f, p=%.3f' % (stat, p))
-# interpret
-#alpha = 0.05
-#if p > 0.05:
-#    print('Sample looks Gaussian (DAgostino/Pearson)(fail to reject H0)')
-#else:
-#    print('Sample does not look Gaussian (DAgostino/Pearson) (reject H0)')  
-
-#result = anderson(dx[iz][ty])
-#print('Statistic: %.3f' % result.statistic)
-#p = 0
-#for i in range(len(result.critical_values)):
-#    sl, cv = result.significance_level[i], result.critical_values[i]
-#    if result.statistic < result.critical_values[i]:
-#        print('%.3f: %.3f, data looks normal (fail to reject H0)' % (sl, cv))
-#    else:
-#        print('%.3f: %.3f, data does not look normal (reject H0)' % (sl, cv))  
-           
-#sys.exit()  
   
 def histogram_plot(ix):  
   ax = dx[ix].plot.hist(bins=50, alpha=0.5)
@@ -220,20 +186,14 @@ def histogram_plot(ix):
     ax.set(title="All species")  
   plt.show()
   plt.close()
-=======
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
 
 # Display correlation between columns
 # ref https://medium.com/@sebastiannorena/finding-correlation-between-many-variables-multidimensional-dataset-with-python-5deb3f39ffb3
 def plot_correlation(ix):
 # ref https://stackoverflow.com/questions/11285613/selecting-multiple-columns-in-a-pandas-dataframe 
-<<<<<<< HEAD
 
 # ref https://stackoverflow.com/questions/332289/how-do-you-change-the-size-of-figures-drawn-with-matplotlib
   fig = plt.figure(figsize=(8,6))
-=======
-  fig = plt.figure()
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
   corr = dx[ix].iloc[:,0:4].corr()
   ax = fig.add_subplot(111)
   cax = ax.matshow(corr,cmap='coolwarm', vmin=-1, vmax=1)
@@ -245,24 +205,15 @@ def plot_correlation(ix):
   ax.set_xticklabels(dx[ix].iloc[:,0:4].columns)
   ax.set_yticklabels(dx[ix].iloc[:,0:4].columns)
   if ix:
-<<<<<<< HEAD
     atitle = 'Pearson correlation for Sepal/Petal length - ' + species[(ix-1)]
   else:
     atitle = 'Pearson correlation for Sepal/Petal length - ' + sl
-=======
-    atitle = 'Pearson correlation for Sepal/Petal length for ' + species[(ix-1)]
-  else:
-    atitle = 'Pearson correlation for Sepal/Petal length for ' + sl
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
   ax.set(title=atitle)
   plt.show()
   
-def print_data():
-  print("\n",df,"\n")
-<<<<<<< HEAD
-  print("(units - cm)")
-=======
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
+# def print_data():
+#  print("\n",df,"\n")
+#  print("(units - cm)")
   
 # ref https://stackoverflow.com/questions/17071871/select-rows-from-a-dataframe-based-on-values-in-a-column-in-pandas/17071908
 # print(df.loc[df['species'] == species[0]])
@@ -273,10 +224,9 @@ def print_data():
 # ref https://www.kaggle.com/abhishekkrg/python-iris-data-visualization-and-explanation
 # print(df.groupby(columnNames[4]).size())
 
-def show_species(ix):
-  print("\n",dx[(ix+1)],"\n")
-<<<<<<< HEAD
-  print("(units - cm)")
+#def show_species(ix):
+#  print("\n",dx[(ix+1)],"\n")
+#  print("(units - cm)")
   
 # ref https://www.kaggle.com/abhishekkrg/python-iris-data-visualization-and-explanation
   
@@ -316,63 +266,166 @@ def plot_scatter_psw():
   plt.show()
   plt.close()         
       
-=======
-  
-# ref https://www.kaggle.com/abhishekkrg/python-iris-data-visualization-and-explanation
-def plot_scatter():
-  # plt.figure()
-  fig,ax=plt.subplots(1,2,figsize=(17, 9))
-  for i in range (3):
-    dx[i].plot(x="sepal_length", y="sepal_width", kind="scatter",ax=ax[0],label=species[i],color=co[i])
-    dx[i].plot(x="petal_length", y="petal_width", kind="scatter",ax=ax[1],label=species[i],color=co[i])     
-  ax[0].set(title='Sepal comparison ', ylabel='sepal-width')
-  ax[1].set(title='Petal Comparison',  ylabel='petal-width')
-  ax[0].legend()
-  ax[1].legend()
-  plt.show()
-  plt.close()
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
   
 # ref https://stackoverflow.com/questions/49970309/how-do-i-calculate-the-mean-of-each-species-of-the-iris-data-set-in-python
 # ref https://www.tutorialspoint.com/python_pandas/python_pandas_descriptive_statistics.htm
-def print_stats():
-<<<<<<< HEAD
-  print(bld + "\nStats for ",sl," (units - cm)" + blx)
-  print(statall)
-  print(" ")
-  ot = str(statall)
+#def print_stats():
+#  print(bld + "\nStats for ",sl," (units - cm)" + blx)
+#  print(statall)
+#  print(" ")
+#  ot = str(statall)
   
-def print_statsx(ix):
-  print(bld + "\nStats for ",species[ix]," (units - cm)" + blx)
-=======
-  print("\nStats for ",sl)
-  print(statall)
-  print(" ")
-  
-def print_statsx(ix):
-  print("\nStats for ",species[ix])
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
-  print(stat[ix])
-  print(" ")
+# def print_statsx(ix):
+#  print(bld + "\nStats for ",species[ix]," (units - cm)" + blx)
+#  print(stat[ix])
+#  print(" ")
   
 def close_all():
   master.quit()
   master.destroy()
-<<<<<<< HEAD
   
-=======
-        
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
+def close_root(root):
+  root.quit()
+#  root.destroy()  
+   
+
+#ref http://python.6.x6.nabble.com/how-to-display-terminal-messages-in-dialog-window-using-tkinter-td1714170.html
+# ref https://www.pythoncentral.io/introduction-to-pythons-tkinter/ 
+def print_statsx(ix):
+  root = Tk() 
+  t1 = Text(root) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass    
+
+  sys.stdout = PrintToT1() 
+  print("\nStats for ",species[ix]," (units - cm)\n")
+  print(stat[ix])
+  print(" ")
+  sys.stdout=saveout
+  
+  mainloop()
+
+def print_stats():
+  root = Tk() 
+  t1 = Text(root) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass    
+  sys.stdout = PrintToT1() 
+  print("\nStats for ",sl," (units - cm)")
+  print(statall)
+  print(" ")
+  sys.stdout=saveout
+  mainloop()      
+
+def helptext():
+  root = Tk() 
+  t1 = Text(root, height=20, width=95) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass    
+  sys.stdout = PrintToT1() 
+  print(hlptext)
+  sys.stdout=saveout
+  mainloop()  
+  
+  
+def print_data():
+  root = Tk() 
+  t1 = Text(root,width=95) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass    
+  sys.stdout = PrintToT1() 
+  print("\n",df,"\n")
+  print("(units - cm)")
+  sys.stdout=saveout
+  mainloop()     
+  print("\n",df,"\n")      
+
+def show_species(ix):
+  root = Tk() 
+  t1 = Text(root) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass    
+  sys.stdout = PrintToT1() 
+  print("\n",dx[(ix+1)],"\n")
+  print("(units - cm)")
+  sys.stdout=saveout
+  mainloop()             
+                    
+             
+def show_stats_checks(ix):
+  root = Tk() 
+  t1 = Text(root) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass    
+  sys.stdout = PrintToT1() 
+  
+  
+  for i in range(4):
+  
+# ref https://machinelearningmastery.com/a-gentle-introduction-to-normality-tests-in-python/
+    stat, p = shapiro(dx[ix][columnNames[i]])
+    if ix:
+      print('Statistics for ' + species[(ix-1)] + ' ' + columnNames[i] + '=%.3f, p=%.3f' % (stat, p))
+    else:
+      print('Statistics for all species ' + columnNames[i] + '=%.3f, p=%.3f' % (stat, p))     
+    if p > 0.05:
+      print('Sample looks Gaussian (Shapiro) (fail to reject H0)')
+    else:
+      print('Sample does not look Gaussian (Shapiro) (reject H0)')
+
+    stat, p = normaltest(dx[ix][columnNames[i]])
+    print('Statistics=%.3f, p=%.3f' % (stat, p))
+    if p > 0.05:
+      print('Sample looks Gaussian (DAgostino/Pearson)(fail to reject H0)')
+    else:
+      print('Sample does not look Gaussian (DAgostino/Pearson) (reject H0)')  
+
+    result = anderson(dx[ix][columnNames[i]])
+    print('Statistic: %.3f' % result.statistic)
+    for i2 in range(len(result.critical_values)):
+      sl, cv = result.significance_level[i2], result.critical_values[i2]
+      if result.statistic < result.critical_values[i2]:
+        print('%.3f: %.3f, data looks normal (fail to reject H0)' % (sl, cv))
+      else:
+        print('%.3f: %.3f, data does not look normal (reject H0)' % (sl, cv))  
+           
+  
+  
+  sys.stdout=saveout
+  mainloop()                                         
+                                                                   
+                                                                                              
+                                                                                                                                                    
 master = Tk()
 
 Button(master, text='Show all data', command=print_data).grid(row=0, column=0, sticky=W, pady=4)
 for i in range(3):
   Button(master, text='Data for ' + species[i], command=partial(show_species,i)).grid(row=0, column=(i+1), sticky=W, pady=4)
-<<<<<<< HEAD
   
-=======
-
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
 Button(master, text='Show overall stats', command=print_stats).grid(row=1, column=0, sticky=W, pady=4)
 for i in range(3):
   Button(master, text='Stats for ' + species[i], command= partial(print_statsx,i)).grid(row=1,column=(i+1),sticky=W,pady=4)
@@ -380,28 +433,32 @@ for i in range(3):
 Button(master, text='Overall correlations', command= partial(plot_correlation,0)).grid(row=2, column=0, sticky=W, pady=4)
 for i in range(1,4):
   Button(master, text='Correlations for ' + species[(i-1)], command= partial(plot_correlation,i)).grid(row=2, column=(i), sticky=W, pady=4)
-<<<<<<< HEAD
 
 Button(master, text='Overall frequency plot', command= partial(histogram_plot,0)).grid(row=3, column=0, sticky=W, pady=4)
 for i in range(1,4):
   Button(master, text='Frequency plot for ' + species[(i-1)], command= partial(histogram_plot,i)).grid(row=3, column=(i), sticky=W, pady=4)
+
          
-Button(master, text='Petal Len-Width scatter'   , command=plot_scatter_pp).grid (row=4, column=0, sticky=W, pady=4)
-Button(master, text='Sepal Len-Width scatter'   , command=plot_scatter_ss).grid (row=4, column=1, sticky=W, pady=4)
-Button(master, text='Petal-Sepal Length scatter', command=plot_scatter_psl).grid(row=4, column=2, sticky=W, pady=4)
-Button(master, text='Petal-Sepal Width scatter' , command=plot_scatter_psw).grid(row=4, column=3, sticky=W, pady=4)
+Button(master, text='Overall Normal Fit plot', command= partial(normal_fit,0)).grid(row=4, column=0, sticky=W, pady=4)
+for i in range(1,4):
+  Button(master, text='Normal Fit plot for ' + species[(i-1)], command= partial(normal_fit,i)).grid(row=4, column=(i), sticky=W, pady=4)
+                  
+Button(master, text='Overall Stats check', command= partial(show_stats_checks,0)).grid(row=5, column=0, sticky=W, pady=4)
+for i in range(1,4):
+  Button(master, text='Stats check for ' + species[(i-1)], command= partial(show_stats_checks,i)).grid(row=5, column=(i), sticky=W, pady=4)
+
+                                                      
+                                             
+Button(master, text='Petal Len-Width scatter'   , command=plot_scatter_pp).grid (row=6, column=0, sticky=W, pady=4)
+Button(master, text='Sepal Len-Width scatter'   , command=plot_scatter_ss).grid (row=6, column=1, sticky=W, pady=4)
+Button(master, text='Petal-Sepal Length scatter', command=plot_scatter_psl).grid(row=6, column=2, sticky=W, pady=4)
+Button(master, text='Petal-Sepal Width scatter' , command=plot_scatter_psw).grid(row=6, column=3, sticky=W, pady=4)
 # ref https://stackoverflow.com/questions/6920302/how-to-pass-arguments-to-a-button-command-in-tkinter/22290388
 
-Button(master, text='Show photos', command=show_photos).grid(row=5, column=0, sticky=W, pady=4)
-Button(master, text='Help', command=helptext).grid(row=6, column=0, sticky=W, pady=4)
-Button(master, text='Quit', command=close_all).grid(row=7, column=0, sticky=W, pady=4)
-=======
-  
-Button(master, text='Scatter graphs', command=plot_scatter).grid(row=3, column=0, sticky=W, pady=4)
-# ref https://stackoverflow.com/questions/6920302/how-to-pass-arguments-to-a-button-command-in-tkinter/22290388
+Button(master, text='Show photos', command=show_photos).grid(row=7, column=0, sticky=W, pady=4)
+Button(master, text='Help', command=helptext).grid(row=8, column=0, sticky=W, pady=4)
+Button(master, text='Quit', command=close_all).grid(row=9, column=0, sticky=W, pady=4)
 
-Button(master, text='Help', command=helptext).grid(row=4, column=0, sticky=W, pady=4)
-Button(master, text='Quit', command=close_all).grid(row=5, column=0, sticky=W, pady=4)
->>>>>>> f347d7dbd175ace7f8f3f3bdbfe0f4e3f46d7cbf
-
+# Button(master, text='Show data', command= partial(say_hello,1)).grid(row=10, column=0, sticky=W, pady=4)
+ 
 mainloop()
