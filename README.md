@@ -6,6 +6,9 @@ In 1935 data were collected by researcher Edgar Anderson of the sepal and petal 
 
 This project uses a Python program to provide a brief overview of the data set, and basic statistical features of it, via a mixture of graphical presentations and the outputs from probability distribution functions.
 
+A snippet of the first few rows of the data is :
+![alt text](RawData.jpg)
+
 **Method**
 A copy of the data set was downloaded from Github [4], and a Python program was written to carry out the following :
 
