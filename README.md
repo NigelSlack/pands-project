@@ -53,7 +53,7 @@ Iris_Versicolor.jpg  -  A photograph of Iris Versicolor [6]
 Iris_verginica.jpg   -  A photograph of Iris Virginica [7]
 
 
-References
+**References**
 [1] https://www.academia.edu/13069408/Report_on_Edgar_Anderson_s_Iris_Data_Analysis
 [2] https://www.statisticssolutions.com/discriminant-analysis/
 [3] https://en.wikipedia.org/wiki/Iris_flower_data_set
