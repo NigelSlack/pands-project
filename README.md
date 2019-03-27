@@ -43,21 +43,36 @@ The following files constitute the project :
 iris_dataset.py      -  The python program used to present the data.
                         No run time arguments required, but 'help' can be accepted as an argument
                         Syntax : python iris_dataset.py [help]
+
 irisdata.csv         -  A csv of the actual data (from Github)
+
 Correlation.jpg      -  An example of the output from a correlation plot
+
 Histogram.jpg        -  An example of the output from a histogram plot
+
 NormalPlot.jpg       -  An example of the output from a Normal fit plot
+
 Scatter.jpg          -  An example of the output from a Scatter plot 
+
 Iris_Setosa.jpg      -  A photograph of Iris Setosa [5]
+
 Iris_Versicolor.jpg  -  A photograph of Iris Versicolor [6]
+
 Iris_verginica.jpg   -  A photograph of Iris Virginica [7]
 
 
 **References**
+
 [1] https://www.academia.edu/13069408/Report_on_Edgar_Anderson_s_Iris_Data_Analysis
+
 [2] https://www.statisticssolutions.com/discriminant-analysis/
+
 [3] https://en.wikipedia.org/wiki/Iris_flower_data_set
+
 [4] https://gist.github.com/curran/a08a1080b88344b0c8a7
+
 [5] http://www.cfgphoto.com/photo-55675.htm
+
 [6] https://commons.wikimedia.org/wiki/File:Iris_versicolor_3.jpg
+
 [7] https://commons.wikimedia.org/wiki/File:Iris_virginica_-_NRCS.jpg
