@@ -3,7 +3,7 @@
 # Author       : Nigel Slack
 # Language     : python
 #
-# Function     : Use a GUI to display the data and simple numerical and graphical statistical 
+# Function     : Use a GUI to display the data and simple textual and graphical statistical 
 #                analyses of the 'well known' Iris dataset (published by statistician Ronald Fisher
 #                in his 1936 paper 'The use of multiple measurements in taxonomic problems)'.
 #                
@@ -25,6 +25,12 @@
 # 21/03/2019 NS Include photos        
 # 23/03/2019 NS Include Normal Fit plots and analysis by probability distribution functions
 # 25/03/2019 NS Put output text into GUI boxes
+# 27/03/2019 NS Tidy up statistical tests output
+# 28/03/2019 NS Remove Median as a separate stats value - already provided by the 'Describe' 50%
+#               percentile.
+# 28/03/2019 NS Include histogram plot combining characteristics of each species
+#               Use variable for numbering Button rows, rather than hard-code
+# 03/04/2019 NS Include probability check. Set colours on buttons. Re-order buttons. 
 #
 #----------------------------------------------------------------------------------------------------#
 
@@ -38,29 +44,92 @@ matplotlib.use("TkAgg")
 from functools import partial
 from pylab import *
 import matplotlib.pyplot as plt
-import seaborn as sns
 from tkinter import *
-from tkinter import messagebox
-from scipy.stats import shapiro
-from scipy.stats import normaltest
-from scipy.stats import anderson
-from scipy import polyval, stats
+from scipy.stats import *
 from pylab import imread,subplot,imshow,show
 from statsmodels.graphics.gofplots import qqplot
+from sklearn.neighbors import KernelDensity
 
-hlptext = """\n Display data and statistical analyses of the well known 'Iris data set'.
- The data provided by a collection of fifty samples each of three species of
- Iris collected by biologist Edgar Anderson were analysed in a paper in 1936
- by statistician Ronald Fisher. Since then this data set has been widely used for 
- testing statistical techniques.
+saveout=sys.stdout
 
- This program provides an easy to use GUI to examine the data itself, and simple statistical
- features of the data.
+
+
+hlptext = """\n Display data and statistical analyses of the 'well known' Iris data set.
+ The data of petal length/width and sepal length/width, provided by a collection of fifty samples each of three species of
+ Iris collected by biologist Edgar Anderson, were analysed in a paper in 1936 by statistician Ronald Fisher. Since then this 
+ data set has been widely used for testing and developing statistical techniques.
+
+ This program provides an easy to use GUI to examine the data itself, simple statistical features of the data (in text 
+ and graphical form), and a probability check of inputs by the user for a given length, species and characteristic being 
+ found in a range (< or > the input value) for a random sample. eg if the user entered a length of '4', then ticked the
+ boxes for 'Setosa', 'Sepal length' and '<', the output would be the estimated probability that a random sample for the 
+ selected species and characteristic would be less than 4cm long.
+
+ Simply click on the buttons, labelled according to function, to display data, or enter a length (in cm) and tick the
+ boxes of one species, characteristic and '<' or '>'.
+
+ The stats check applies 3 commonly used models for testing how 'normal' the data are - that is, how well the data fit a 
+ classic bell shaped curve - with the bulk of samples clustered around the mean length, tailing off rapidly for lengths 
+ significantly different from the mean.
+ 
+ The graphical outputs provide a quick visual assessment to compare and contrast correlations and distributions for  
+ each species and characteristic.
+
  Syntax : python iris_dataset.py [help]"""
+ 
+# ref https://www.academia.edu/21960049/Step_by_step_practical_guide_with_Statistics_from_ANOVA_to_survival_analysis_in_Biological_Sciences
+summout = """\n The statistical tests and plots indicate the following  :
+ A very clear distinction exists between the petal length and width for Setosa compared to Versicolor and Virginica, with 
+ the Setosa lengths being far smaller (by a factor of 3 to 5). The mean petal width of Versicolor is the characteristic that
+ shows the greatest percentage difference from that for Virginica, and would be the best characteristic for distinguishing
+ the two.
+ All three species exhibit different strengths of correlation between characteristics - for Setosa Sepal length/width are
+ strongly correlated, for Versicolor it is Petal length/width and Petal/Sepal length, and for Virginica Sepal/Petal width
+ shows the strongest correlation.
+ The histogram frequency plots demonstrate that for Setosa there is little tailing off for smaller values of petal width.
+ The amount of 'spread' (variance) for characteristics differs between Setosa and the other two - for Setosa sepal 
+ length/width is most varied, for Versicolor/Virginica it is sepal/petal length.
+ The statistical tests reflect the evidence from the histograms, with Setosa petal width being determined by all elements
+ of the tests to be non-Gaussian (normal/bell shaped).
+ The normal fit plots show that Setosa petal widths demonstrate the greatest level of clumping around discrete values, thus
+ deviating the most from the 'normal' line.
+ The scatter graphs for all four comparisons indicate that the features for Setosa are quite distinct from the other
+ two. For Versicolor/Virginica, petal length/width are slightly greater for Virginica, with sepal length/width being
+ highly intermingled.
 
-# def helptext():  
-#  print(hlptext)  
-      
+ Conclusion : Using a combination of the distinctions highlighted above, an inexperienced botanist collecting random 
+ samples gathered in the field should easily be able to distinguish between Setosa and the other two, but may need to
+ examine features other than petal/sepal length/width to distinguish with confidence between Versicolor/Virginica."""
+
+# ref https://stackoverflow.com/questions/26629695/how-to-display-content-of-pandas-data-frame-in-tkinter-gui-window  
+def helptext():
+  root = Tk() 
+  t1 = Text(root, height=24, width=125) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass   
+  sys.stdout = PrintToT1() 
+  print(hlptext)
+  sys.stdout=saveout
+  mainloop()   
+  
+def summary():
+  root = Tk() 
+  t1 = Text(root, height=24, width=125) 
+  t1.pack() 
+  class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass   
+  sys.stdout = PrintToT1() 
+  print(summout)
+  sys.stdout=saveout
+  mainloop()      
+                  
 # Use the python 'sys' module to check for run time arguments. 
 # If the user input 'help' output help text, otherwise tell them no arguments are required.
 # ref https://stackabuse.com/command-line-arguments-in-python/
@@ -77,23 +146,21 @@ df = pd.read_csv('irisdata.csv')
 # number of rows given by len(df.index)
 # ref https://stackoverflow.com/questions/15943769/how-do-i-get-the-row-count-of-a-pandas-dataframe
 
-# Add median and variance to the stats provided by describe
+# Add variance to the stats provided by describe
 #ref https://stackoverflow.com/questions/38545828/pandas-describe-by-additional-parameters
 def describe(df):
     return pd.concat([df.describe().T,
-                      df.median().rename('median'),
                       df.var().rename('variance'),
                      ], axis=1).T
                      
 def describex(df,ix):
     return pd.concat([df[df[columnNames[4]]==species[ix]].describe().T,
-                      df[df[columnNames[4]]==species[ix]].median().rename('median'),
                       df[df[columnNames[4]]==species[ix]].var().rename('variance'),                      
                      ], axis=1).T                     
                      
 pd.set_option('display.max_rows',len(df.index))
+# ref https://stackoverflow.com/questions/49188960/how-to-show-all-of-columns-name-on-pandas-dataframe
 pd.set_option('display.max_columns', None)
-# pd.set_option('display.max_rows', None)
 statall=describe(df)
 sl = str(df['species'].unique()).strip('[').strip(']')
 
@@ -104,23 +171,33 @@ co = ['r','b','g']
 
 # Turn bold on/off
 # ref https://stackoverflow.com/questions/287871/print-in-terminal-with-colors
-blx = '\033[0m'
-bld = '\033[1m'
+# blx = '\033[0m'
+# bld = '\033[1m'
 dx,stat =([],[])
 dx.append(df)
-saveout=sys.stdout
 
 #ref https://stackoverflow.com/questions/52350313/python-for-loop-create-a-list
 for i in range (3):
   dx.append(df[df[columnNames[4]]==species[i]])
   stat.append(describex(df[df[columnNames[4]]==species[i]],i))
   
+
+means=[]
+stds=[]
+# ref https://stackoverflow.com/questions/30482071/how-to-calculate-mean-values-grouped-on-another-column-in-pandas
+for i in range(4):
+  mn=list(df.groupby(columnNames[4])[columnNames[i]].mean())
+  st=list(df.groupby(columnNames[4])[columnNames[i]].std())
+  for i2 in range(3):
+    means.append(mn[i2])
+    stds.append(st[i2])  
+  
 def normal_fit(ix):
   fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12,5.5))
   ax= axes.flatten()  
   for i1 in range(4):
 # ref https://thispointer.com/select-rows-columns-by-name-or-index-in-dataframe-using-loc-iloc-python-pandas/  
-    cD = dx[ix].loc[ : , columnNames[ix]] 
+    cD = dx[ix].loc[ : , columnNames[i1]] 
 # ref https://stackoverflow.com/questions/52813683/multiple-qq-plots-in-one-figure    
     qqplot(cD, line='s',ax = ax[i1])
     if ix:
@@ -176,9 +253,26 @@ def show_photos():
   plt.figtext(.5, .05, itext, multialignment='left')
   plt.show()
   
+
+def histogram_plot2(i): 
+# ref http://justinbois.github.io/bootcamp/2017/lessons/l21_intro_to_matplotlib.html
+  cx=[]
+  fig, ax = plt.subplots(1, 1,figsize=(8, 5))
+  for ix in range(3):
+    cx.append(columnNames[i] + "." + species[ix])
+# ref https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.iloc.html    
+    ax.hist(dx[(ix+1)].iloc[0:50,i], bins=50, alpha=0.5,color=co[ix])
   
+  ax.legend((cx[0], cx[1], cx[2]), loc='upper right')
+  ax.set(title="Comparison " + columnNames[i])
+ 
+  plt.xlabel("cm",fontsize=15)
+  plt.ylabel("Frequency",fontsize=15)
+  plt.show()
+  plt.close()
+          
 def histogram_plot(ix):  
-  ax = dx[ix].plot.hist(bins=50, alpha=0.5)
+  ax = dx[ix].plot.hist(bins=100, alpha=0.5)
   plt.xlabel('cm')
   if ix:
     ax.set(title=species[(ix-1)])
@@ -210,30 +304,13 @@ def plot_correlation(ix):
     atitle = 'Pearson correlation for Sepal/Petal length - ' + sl
   ax.set(title=atitle)
   plt.show()
-  
-# def print_data():
-#  print("\n",df,"\n")
-#  print("(units - cm)")
-  
-# ref https://stackoverflow.com/questions/17071871/select-rows-from-a-dataframe-based-on-values-in-a-column-in-pandas/17071908
-# print(df.loc[df['species'] == species[0]])
-
-# ref https://stackoverflow.com/questions/17071871/select-rows-from-a-dataframe-based-on-values-in-a-column-in-pandas/17071908
-# print(df.loc[(df[columnNames[0]] >= 4.0) & (df[columnNames[0]] <= 5.0)])
-
-# ref https://www.kaggle.com/abhishekkrg/python-iris-data-visualization-and-explanation
-# print(df.groupby(columnNames[4]).size())
-
-#def show_species(ix):
-#  print("\n",dx[(ix+1)],"\n")
-#  print("(units - cm)")
-  
+    
 # ref https://www.kaggle.com/abhishekkrg/python-iris-data-visualization-and-explanation
   
 def plot_scatter_ss():
   fig,ax=plt.subplots(1,1,figsize=(7,5))
   for i in range (3):
-    dx[i].plot(x="sepal_length", y="sepal_width" , kind="scatter",ax=ax,label=species[i],color=co[i])    
+    dx[(i+1)].plot(x="sepal_length", y="sepal_width" , kind="scatter",ax=ax,label=species[i],color=co[i])    
   ax.set(title='Sepal comparison ',xlabel='sepal-length (cm)',ylabel='sepal-width (cm)')
   ax.legend()
   plt.show()
@@ -242,7 +319,7 @@ def plot_scatter_ss():
 def plot_scatter_pp():
   fig,ax=plt.subplots(1,1,figsize=(7,5))
   for i in range (3):
-    dx[i].plot(x="petal_length", y="petal_width" , kind="scatter",ax=ax,label=species[i],color=co[i])    
+    dx[(i+1)].plot(x="petal_length", y="petal_width" , kind="scatter",ax=ax,label=species[i],color=co[i])    
   ax.set(title='Petal comparison ',xlabel='petal-length (cm)',ylabel='petal-width (cm)')
   ax.legend()
   plt.show()
@@ -251,7 +328,7 @@ def plot_scatter_pp():
 def plot_scatter_psl():
   fig,ax=plt.subplots(1,1,figsize=(7,5))
   for i in range (3):
-    dx[i].plot(x="petal_length", y="sepal_length" , kind="scatter",ax=ax,label=species[i],color=co[i])    
+    dx[(i+1)].plot(x="petal_length", y="sepal_length" , kind="scatter",ax=ax,label=species[i],color=co[i])    
   ax.set(title='Petal-Sepal length comparison ',xlabel='petal-length (cm)',ylabel='sepal-length (cm)')
   ax.legend()
   plt.show()
@@ -260,33 +337,15 @@ def plot_scatter_psl():
 def plot_scatter_psw():
   fig,ax=plt.subplots(1,1,figsize=(7,5))
   for i in range (3):
-    dx[i].plot(x="petal_width", y="sepal_width" , kind="scatter",ax=ax,label=species[i],color=co[i])    
+    dx[(i+1)].plot(x="petal_width", y="sepal_width" , kind="scatter",ax=ax,label=species[i],color=co[i])    
   ax.set(title='Petal-Sepal width comparison ',xlabel='petal-width (cm)',ylabel='sepal-width (cm)')
   ax.legend()
   plt.show()
   plt.close()         
-      
-  
-# ref https://stackoverflow.com/questions/49970309/how-do-i-calculate-the-mean-of-each-species-of-the-iris-data-set-in-python
-# ref https://www.tutorialspoint.com/python_pandas/python_pandas_descriptive_statistics.htm
-#def print_stats():
-#  print(bld + "\nStats for ",sl," (units - cm)" + blx)
-#  print(statall)
-#  print(" ")
-#  ot = str(statall)
-  
-# def print_statsx(ix):
-#  print(bld + "\nStats for ",species[ix]," (units - cm)" + blx)
-#  print(stat[ix])
-#  print(" ")
   
 def close_all():
   master.quit()
   master.destroy()
-  
-def close_root(root):
-  root.quit()
-#  root.destroy()  
    
 
 #ref http://python.6.x6.nabble.com/how-to-display-terminal-messages-in-dialog-window-using-tkinter-td1714170.html
@@ -306,7 +365,6 @@ def print_statsx(ix):
   print(stat[ix])
   print(" ")
   sys.stdout=saveout
-  
   mainloop()
 
 def print_stats():
@@ -324,21 +382,6 @@ def print_stats():
   print(" ")
   sys.stdout=saveout
   mainloop()      
-
-def helptext():
-  root = Tk() 
-  t1 = Text(root, height=20, width=95) 
-  t1.pack() 
-  class PrintToT1(object): 
-     def write(self, s): 
-       t1.insert(END, s) 
-     def flush(self):
-       pass    
-  sys.stdout = PrintToT1() 
-  print(hlptext)
-  sys.stdout=saveout
-  mainloop()  
-  
   
 def print_data():
   root = Tk() 
@@ -353,8 +396,7 @@ def print_data():
   print("\n",df,"\n")
   print("(units - cm)")
   sys.stdout=saveout
-  mainloop()     
-  print("\n",df,"\n")      
+  mainloop()          
 
 def show_species(ix):
   root = Tk() 
@@ -371,7 +413,6 @@ def show_species(ix):
   sys.stdout=saveout
   mainloop()             
                     
-             
 def show_stats_checks(ix):
   root = Tk() 
   t1 = Text(root) 
@@ -383,82 +424,267 @@ def show_stats_checks(ix):
        pass    
   sys.stdout = PrintToT1() 
   
-  
+  pout=[None] * 4
   for i in range(4):
   
 # ref https://machinelearningmastery.com/a-gentle-introduction-to-normality-tests-in-python/
+      
+# ref https://statisticsbyjim.com/hypothesis-testing/interpreting-p-values/
+
+# ref https://machinelearningmastery.com/a-gentle-introduction-to-normality-tests-in-python/
+
+# This means that, in general, we are seeking results with a larger p-value to confirm that our sample 
+# was likely drawn from a Gaussian distribution.
+# A result above 5% does not mean that the null hypothesis is true. It means that it is very likely true 
+# given available evidence. The p-value is not the probability of the data fitting a Gaussian distribution;
+# it can be thought of as a value that helps us interpret the statistical test.
+
+# In practice, the Shapiro-Wilk test is believed to be a reliable test of normality, although there is some 
+# suggestion that the test may be suitable for smaller samples of data, e.g. thousands of observations or fewer.
+
+# The D’Agostino’s K^2 test calculates summary statistics from the data, namely kurtosis and skewness, to 
+# determine if the data distribution departs from the normal distribution, named for Ralph D’Agostino.
+
+# Skew is a quantification of how much a distribution is pushed left or right, a measure of asymmetry in 
+# the distribution.
+# Kurtosis quantifies how much of the distribution is in the tail. It is a simple and commonly used 
+# statistical test for normality.
+
+
+# Anderson-Darling Test is a statistical test that can be used to evaluate whether a data sample comes from 
+# one of among many known data samples, named for Theodore Anderson and Donald Darling.
+# It can be used to check whether a data sample is normal. The test is a modified version of a more 
+# sophisticated nonparametric goodness-of-fit statistical test called the Kolmogorov-Smirnov test.
+# A feature of the Anderson-Darling test is that it returns a list of critical values rather than a single 
+# p-value. This can provide the basis for a more thorough interpretation of the result.
+# The anderson() SciPy function implements the Anderson-Darling test. It takes as parameters the data sample 
+# and the name of the distribution to test it against. By default, the test will check against the Gaussian 
+# distribution (dist=’norm’).
+
+
+# ref http://blog.minitab.com/blog/adventures-in-statistics-2/choosing-between-a-nonparametric-test-and-a-parametric-test
+# Reasons to Use Nonparametric Tests
+# Reason 1: Your area of study is better represented by the median
+# Comparing two skewed distributionsThis is my favorite reason to use a nonparametric test and the one that 
+# isn’t mentioned often enough! The fact that you can perform a parametric test with nonnormal data 
+# doesn’t imply that the mean is the best measure of the central tendency for your data.
+# For example, the center of a skewed distribution, like income, can be better measured by the median 
+# where 50% are above the median and 50% are below. If you add a few billionaires to a sample, the 
+# mathematical mean increases greatly even though the income for the typical person doesn’t change.
+# When your distribution is skewed enough, the mean is strongly affected by changes far out in the 
+# distribution’s tail whereas the median continues to more closely reflect the center of the distribution. 
+# For these two distributions, a random sample of 100 from each distribution produces means that are 
+# significantly different, but medians that are not significantly different.
+
+
+# ref http://www.scs2.net/next/files/courses/stats/session4.pdf
+# Good explanation of hypothesis tests
+
+# ref https://machinelearningmastery.com/a-gentle-introduction-to-normality-tests-in-python/
     stat, p = shapiro(dx[ix][columnNames[i]])
     if ix:
-      print('Statistics for ' + species[(ix-1)] + ' ' + columnNames[i] + '=%.3f, p=%.3f' % (stat, p))
+      pout[i]=('Statistics for ' + species[(ix-1)] + ' ' + columnNames[i] + ' : ')
     else:
-      print('Statistics for all species ' + columnNames[i] + '=%.3f, p=%.3f' % (stat, p))     
-    if p > 0.05:
-      print('Sample looks Gaussian (Shapiro) (fail to reject H0)')
-    else:
-      print('Sample does not look Gaussian (Shapiro) (reject H0)')
+      pout[i]=('Statistics for all species ' + columnNames[i] + ' : ' )  
+    if p > 0.05: 
+      ga=" - looks Gaussian" 
+    else: 
+      ga=" - does not look Gaussian"
+# ref https://stackoverflow.com/questions/6149006/display-a-float-with-two-decimal-places-in-python
+    pout[i]=pout[i]+"\n  Shapiro p-value   " + "{:.2f}".format(p) + ga  
 
     stat, p = normaltest(dx[ix][columnNames[i]])
-    print('Statistics=%.3f, p=%.3f' % (stat, p))
-    if p > 0.05:
-      print('Sample looks Gaussian (DAgostino/Pearson)(fail to reject H0)')
-    else:
-      print('Sample does not look Gaussian (DAgostino/Pearson) (reject H0)')  
+    if p > 0.05: 
+      ga=" - looks Gaussian" 
+    else: 
+      ga=" - does not look Gaussian"  
+    pout[i]=pout[i]+"\n  Pearson p-value   "+"{:.2f}".format(p)+ga  
 
     result = anderson(dx[ix][columnNames[i]])
-    print('Statistic: %.3f' % result.statistic)
     for i2 in range(len(result.critical_values)):
       sl, cv = result.significance_level[i2], result.critical_values[i2]
       if result.statistic < result.critical_values[i2]:
-        print('%.3f: %.3f, data looks normal (fail to reject H0)' % (sl, cv))
+        if i2 < 2:
+          pout[i]=(pout[i]+"\n  Anderson %.3f: %.3f - looks Gaussian" % (sl, cv))
+        else:
+          pout[i]=(pout[i]+"\n  Anderson  %.3f: %.3f - looks Gaussian" % (sl, cv))
       else:
-        print('%.3f: %.3f, data does not look normal (reject H0)' % (sl, cv))  
-           
-  
-  
+        if i2 < 2:
+          pout[i]=(pout[i]+"\n  Anderson %.3f: %.3f - does not look Gaussian" % (sl, cv))
+        else:
+          pout[i]=(pout[i]+"\n  Anderson  %.3f: %.3f - does not look Gaussian" % (sl, cv))
+       
+    pout[i]=(pout[i]+"\n")   
+    print(pout[i])     
+   
   sys.stdout=saveout
   mainloop()                                         
                                                                    
+def check_inputs():
+
+    root = Tk() 
+    t1 = Text(root, height=4, width=25) 
+    t1.pack() 
+    class PrintToT1(object): 
+     def write(self, s): 
+       t1.insert(END, s) 
+     def flush(self):
+       pass   
+    sys.stdout = PrintToT1() 
+
+ 
+    i,n1,n2,n3=0,0,0,0 
+    spx,chx,cx=[0,0,0],[0,0,0,0],[0,0]
+    ok=True
+    for v in vars:
+      if v.get():
+        if i < 3:
+          spx[i]=1
+          n1+=1
+        elif i < 7:
+          chx[(i-3)]=1
+          n2+=1 
+        else:
+          cx[(i-7)]=1
+          n3+=1 
+      i+=1
+    
+    if (not n1) or (not n2) or (not n3):   
+      ok=False
+      print("Select one each of species, characteristic and '<' or '>'")
+    elif (n1>1) or (n2>1) or (n3>1):
+      ok=False
+      print("Only select one each of species, characteristic and '<' or '>'")
+    else:           
+      val = e1.get()
+      try:
+        val = float(val)
+        if val <= 0 or val > 10:
+          print("Enter a length in the range 0 < len <= 10")
+          ok=False
+      except ValueError:
+        print ("Invalid length input")
+        ok=False
+
+    if ok:
+      ind=spx[1]+(spx[2]*2)+(chx[1]*3)+(chx[2]*6)+(chx[3]*9)
+      if cx[0]:
+        print("Probability =",100*round(norm.cdf(val,means[ind],stds[ind]),2),"%")
+      else:  
+        print("Probability =",100*round(norm.sf(val,means[ind],stds[ind]),2),"%")
                                                                                               
+
+      
+      if cx[0]:
+        start = 0
+        end = val
+      else:
+        start = val
+        end = 20  
+     
+      N = 50    # Number of evaluation points 
+      step = (end - start) / (N - 1)  # Step size
+      x = np.linspace(start, end, N)[:, np.newaxis]  # Generate values in the range
+      #kd_vals = np.exp(kd.score_samples(x))  # Get PDF values for each x
+      #probability = np.sum(kd_vals * step)  # Approximate the integral of the PDF
+      #print(probability)                                                                                                                                                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+      sys.stdout=saveout
+      mainloop()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                                                                                                                                                     
 master = Tk()
+rn=0
+vars = []
+for i in range(9):
+    vars.append(IntVar())
+    
+# ref https://stackoverflow.com/questions/3949844/how-to-get-the-screen-size-in-tkinter/3949983#3949983
+screen_width = master.winfo_screenwidth()    
 
-Button(master, text='Show all data', command=print_data).grid(row=0, column=0, sticky=W, pady=4)
+
+Button(master, text='Show all data', command=print_data,fg="orange").grid(row=rn, column=0, sticky=W, pady=4)
 for i in range(3):
-  Button(master, text='Data for ' + species[i], command=partial(show_species,i)).grid(row=0, column=(i+1), sticky=W, pady=4)
-  
-Button(master, text='Show overall stats', command=print_stats).grid(row=1, column=0, sticky=W, pady=4)
+  Button(master, text='Data for ' + species[i], command=partial(show_species,i),fg="orange").grid(row=rn, column=(i+1), sticky=W, pady=4)
+rn+=1
+    
+Button(master, text='Show overall stats', command=print_stats,fg="orange").grid(row=rn, column=0, sticky=W, pady=4)
 for i in range(3):
-  Button(master, text='Stats for ' + species[i], command= partial(print_statsx,i)).grid(row=1,column=(i+1),sticky=W,pady=4)
+  Button(master, text='Stats for ' + species[i], command= partial(print_statsx,i),fg="orange").grid(row=rn,column=(i+1),sticky=W,pady=4)
+rn+=1
+
+Button(master, text='Overall Stats check', command= partial(show_stats_checks,0),fg="orange").grid(row=rn, column=0, sticky=W, pady=4)
+for i in range(1,4):
+  Button(master, text='Stats check for ' + species[(i-1)], command= partial(show_stats_checks,i),fg="orange").grid(row=rn, column=(i), sticky=W, pady=4)
+rn+=1
   
-Button(master, text='Overall correlations', command= partial(plot_correlation,0)).grid(row=2, column=0, sticky=W, pady=4)
+Button(master, text='Overall correlations', command= partial(plot_correlation,0),fg="green").grid(row=rn, column=0, sticky=W, pady=4)
 for i in range(1,4):
-  Button(master, text='Correlations for ' + species[(i-1)], command= partial(plot_correlation,i)).grid(row=2, column=(i), sticky=W, pady=4)
+  Button(master, text='Correlations for ' + species[(i-1)], command= partial(plot_correlation,i),fg="green").grid(row=rn, column=(i), sticky=W, pady=4)
+rn+=1
 
-Button(master, text='Overall frequency plot', command= partial(histogram_plot,0)).grid(row=3, column=0, sticky=W, pady=4)
+Button(master, text='Overall frequency plot', command= partial(histogram_plot,0),fg="green").grid(row=rn, column=0, sticky=W, pady=4)
 for i in range(1,4):
-  Button(master, text='Frequency plot for ' + species[(i-1)], command= partial(histogram_plot,i)).grid(row=3, column=(i), sticky=W, pady=4)
-
-         
-Button(master, text='Overall Normal Fit plot', command= partial(normal_fit,0)).grid(row=4, column=0, sticky=W, pady=4)
+  Button(master, text='Frequency plot for ' + species[(i-1)], command= partial(histogram_plot,i),fg="green").grid(row=rn, column=(i), sticky=W, pady=4)
+rn+=1
+  
+for i in range(0,4):
+  Button(master, text='Frequency plot ' + columnNames[i], command= partial(histogram_plot2,i),fg="green").grid(row=rn, column=(i), sticky=W, pady=4)
+rn+=1
+            
+Button(master, text='Overall Normal Fit plot', command= partial(normal_fit,0),fg="green").grid(row=rn, column=0, sticky=W, pady=4)
 for i in range(1,4):
-  Button(master, text='Normal Fit plot for ' + species[(i-1)], command= partial(normal_fit,i)).grid(row=4, column=(i), sticky=W, pady=4)
+  Button(master, text='Normal Fit plot for ' + species[(i-1)], command= partial(normal_fit,i),fg="green").grid(row=rn, column=(i), sticky=W, pady=4)
+rn+=1
                   
-Button(master, text='Overall Stats check', command= partial(show_stats_checks,0)).grid(row=5, column=0, sticky=W, pady=4)
-for i in range(1,4):
-  Button(master, text='Stats check for ' + species[(i-1)], command= partial(show_stats_checks,i)).grid(row=5, column=(i), sticky=W, pady=4)
 
-                                                      
-                                             
-Button(master, text='Petal Len-Width scatter'   , command=plot_scatter_pp).grid (row=6, column=0, sticky=W, pady=4)
-Button(master, text='Sepal Len-Width scatter'   , command=plot_scatter_ss).grid (row=6, column=1, sticky=W, pady=4)
-Button(master, text='Petal-Sepal Length scatter', command=plot_scatter_psl).grid(row=6, column=2, sticky=W, pady=4)
-Button(master, text='Petal-Sepal Width scatter' , command=plot_scatter_psw).grid(row=6, column=3, sticky=W, pady=4)
+Button(master, text='Petal Len-Width scatter'   , command=plot_scatter_pp,fg="green").grid (row=rn, column=0, sticky=W, pady=4)
+Button(master, text='Sepal Len-Width scatter'   , command=plot_scatter_ss,fg="green").grid (row=rn, column=1, sticky=W, pady=4)
+Button(master, text='Petal-Sepal Length scatter', command=plot_scatter_psl,fg="green").grid(row=rn, column=2, sticky=W, pady=4)
+Button(master, text='Petal-Sepal Width scatter' , command=plot_scatter_psw,fg="green").grid(row=rn, column=3, sticky=W, pady=4)
+rn+=1
+
 # ref https://stackoverflow.com/questions/6920302/how-to-pass-arguments-to-a-button-command-in-tkinter/22290388
 
-Button(master, text='Show photos', command=show_photos).grid(row=7, column=0, sticky=W, pady=4)
-Button(master, text='Help', command=helptext).grid(row=8, column=0, sticky=W, pady=4)
-Button(master, text='Quit', command=close_all).grid(row=9, column=0, sticky=W, pady=4)
+Button(master, text='Show photos', command=show_photos,fg="green").grid(row=rn, column=0, sticky=W, pady=4)
+rn+=1
 
-# Button(master, text='Show data', command= partial(say_hello,1)).grid(row=10, column=0, sticky=W, pady=4)
+
+Label(master, text="Check probability of value in range :", fg="blue").grid(row=rn, column=0, sticky=W)
+rn+=1
+Label(master, text="Enter Length; select one species/characteristic and '<' or '>'",fg="blue").grid(row=rn, column=0, sticky=W)
+rn+=1
+
+Label(master, text="Enter Length (cm)",width = 22,fg="blue").grid(row=rn, column=0, sticky=W)
+e1 = Entry(master,width=3)
+e1.grid(row=rn, column=0,sticky=W)
+#e1.grid(row=rn, column=1)
+rn+=1
+
+Checkbutton(master, text="setosa"    , variable=vars[0],fg="blue").grid(row=rn, column=0, sticky=W)
+Checkbutton(master, text="versicolor", variable=vars[1],fg="blue").grid(row=rn, column=1, sticky=W)
+Checkbutton(master, text="virginica" , variable=vars[2],fg="blue").grid(row=rn, column=2, sticky=W)
+rn+=1  
+  
+Checkbutton(master, text="sepal_length", variable=vars[3],fg="blue").grid(row=rn, column=0, sticky=W)
+Checkbutton(master, text="sepal_width" , variable=vars[4],fg="blue").grid(row=rn, column=1, sticky=W)
+Checkbutton(master, text="petal_length", variable=vars[5],fg="blue").grid(row=rn, column=2, sticky=W)
+Checkbutton(master, text="petal_width" , variable=vars[6],fg="blue").grid(row=rn, column=3, sticky=W)
+rn+=1
+
+Checkbutton(master, text="<", variable=vars[7],fg="blue").grid(row=rn, column=0, sticky=W)
+Checkbutton(master, text=">", variable=vars[8],fg="blue").grid(row=rn, column=1, sticky=W)
+rn+=1
  
+Button(master, text='Check probability', command=check_inputs,fg="blue").grid(row=rn, sticky=W, pady=4)
+rn+=1
+ 
+Button(master, text='Summary', command=summary,fg="red").grid(row=rn, column=0, sticky=W, pady=4)
+rn+=1
+Button(master, text='Help', command=helptext,fg="red").grid(row=rn, column=0, sticky=W, pady=4)
+rn+=1
+Button(master, text='Quit', command=close_all,fg="red").grid(row=rn, column=0, sticky=W, pady=4)
+
+
 mainloop()
