@@ -18,25 +18,30 @@ Using the Tkinter GUI front end, present the user with a 'button' driven menu to
 2. Show a summary of the basic statistics of the data set as a whole, and for each species, including :
    mean, standard deviation, variance, minimum and maximum values, and the 25%, 50% (median) and 75% percentiles
    (the values below which the corresponding percentage of the data lie).
-   Provide these figures for the 4 categories - sepal length/width, petal length/width
-3. Present a coloured display illustrating the correlations between each of the 4 categories of data, for each species
+   Provide these figures for the 4 categories - sepal length/width, petal length/width   
+3. Use 3 probability distribution functions to check the 'normality' of the data - Shapiro (scipy.stats.shapiro), 
+   Pearson (scipy.stats.normaltest) and Anderson (scipy.stats.anderson).
+4. Present a coloured display illustrating the correlations between each of the 4 categories of data, for each species
    and for the whole data set. Use the 'matshow' module to obtain this. An example is :
    ![alt text](Correlation.jpg)
-4. Show a histogram frequency plot, from 'matplotlib', for each of the data types, for the whole data set, and for each species, eg
-   ![alt text](Histogram.jpg)   
-5. Demonstrate graphically how closely each subset fits the Normal probability distribution using 'qqplot' from
+5. Show a histogram frequency plot, from 'matplotlib', for each of the data types, for the whole data set, and for each species, eg
+   ![alt text](Histogram.jpg)
+6. Show a histogram frequency plot, from 'matplotlib', for each of the characteristics, for all three species, eg
+   ![alt text](Histogram2.jpg)   
+7. Demonstrate graphically how closely each subset fits the Normal probability distribution using 'qqplot' from
    'statsmodels.graphics.gofplots. eg ![alt text](NormalPlot.jpg) 
-6. Use 3 probability distribution functions to check the 'normality' of the data - Shapiro (scipy.stats.shapiro), 
-   Pearson (scipy.stats.normaltest) and Anderson (scipy.stats.anderson).
-7. Display scatter graphs for all 3 species of the following characteristics : Sepal length - Sepal width ; 
+8. Display scatter graphs for all 3 species of the following characteristics : Sepal length - Sepal width ; 
    Petal length - Petal width ; Petal length - Sepal length; Petal width - Sepal width
    Use matplotlib plot kind="scatter".
    eg. ![alt text](Scatter.jpg)   
-8. Show a photo of each species, with labels on one of them to highlight a petal and a sepal. 
+9. Show a photo of each species, with labels on one of them to highlight a petal and a sepal. 
    Use matplotlib 'imread' and 'imshow'
-9. Provide a summary of the results in a text box
-10. Show 'help' text in a text box
-11. Allow the user to Quit from the GUI
+10. Provide the user with a length box, and tick boxes for each species and characteristic, plus tick boxes for 
+    '<' and '>', so they can check the probability of a characteristic being in a given range for a random sample,
+    using the 'scipy' cumulative density function check.
+11. Summarise the features of the data for the user, as displayed by the provided functions
+12. Show 'help' text in a text box
+13. Allow the user to Quit from the GUI
 
 The following files constitute the project :
 
@@ -48,7 +53,9 @@ irisdata.csv         -  A csv of the actual data (from Github)
 
 Correlation.jpg      -  An example of the output from a correlation plot
 
-Histogram.jpg        -  An example of the output from a histogram plot
+Histogram.jpg        -  An example of the output from a species histogram plot
+
+Histogram2.jpg       -  An example of the output from the characteristic histogram plots
 
 NormalPlot.jpg       -  An example of the output from a Normal fit plot
 
