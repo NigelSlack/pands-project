@@ -35,7 +35,7 @@ Using the Tkinter GUI front end, present the user with a 'button' driven menu to
    Use matplotlib plot kind="scatter".
    eg. ![alt text](Scatter.jpg)   
 9. Show a photo of each species, with labels on one of them to highlight a petal and a sepal. 
-   Use matplotlib 'imread' and 'imshow'
+   Use matplotlib 'imread' and 'imshow' [5], [6], [7]
 10. Provide the user with a length box, and tick boxes for each species and characteristic, plus tick boxes for 
     '<' and '>', so they can check the probability of a characteristic being in a given range for a random sample,
     using the 'scipy' cumulative density function check.
